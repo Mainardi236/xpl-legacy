@@ -63,12 +63,12 @@ def listar_discos():
         print("\n--- Discos e Drives Disponíveis ---")
         for i, drive in enumerate(drives, 1):
             try:
-                # Remove a barra invertida final para caminhos de drive root
-                caminho = drive.replace("\\", "")
+                # Mantém a barra invertida para caminhos de drive root válidos
+                caminho = drive if drive.endswith("\\") else drive + "\\"
                 total, used, free = shutil.disk_usage(caminho)
                 
-                discos[str(i)] = caminho
-                print(f"[{i}] {caminho} - Tamanho Total: {formatar_tamanho(total)}")
+                discos[str(i)] = caminho.rstrip("\\")
+                print(f"[{i}] {caminho.rstrip(chr(92))} - Tamanho Total: {formatar_tamanho(total)}")
             except FileNotFoundError:
                 # Ignora drives que estão listados mas não montados (ex: leitor de cartão vazio)
                 continue
