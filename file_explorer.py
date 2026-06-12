@@ -7,6 +7,38 @@ import sys
 
 # --- Funções Auxiliares ---
 
+def buscar(caminho, termo):
+    resultados = []
+
+    for raiz, dirs, arquivos in os.walk(caminho):
+        for nome in dirs + arquivos:
+            if termo.lower() in nome.lower():
+                resultados.append(os.path.join(raiz, nome))
+
+    return resultados
+
+def abrir_pasta_explorer(caminho):
+    caminho = formatar_caminho(caminho)
+    try:
+        if platform.system() == "Windows":
+            subprocess.Popen(f'explorer "{caminho}"')
+        elif platform.system() == "Darwin":
+            subprocess.Popen(['open', caminho])
+        else:
+            subprocess.Popen(['xdg-open', caminho])
+        print(f"\n>> Abrindo pasta no explorador: {caminho} <<")
+    except Exception as e:
+        print(f"\n!!! Erro ao abrir a pasta no explorador: {e} !!!")
+
+def limpar_tela():
+    os.system("cls" if os.name == "nt" else "clear")
+
+def formatar_caminho(caminho):
+    """Normaliza e expande um caminho de arquivo/pasta para uso consistente."""
+    if caminho is None:
+        return caminho
+    return os.path.normpath(os.path.abspath(os.path.expanduser(caminho)))
+
 def formatar_tamanho(bytes_num):
     """Converte o número de bytes para um formato legível (KB, MB, GB, etc.)."""
     for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
@@ -162,7 +194,7 @@ def explorador_de_arquivos_master():
                 break
             
             if escolha in discos:
-                caminho_atual = discos[escolha]
+                caminho_atual = formatar_caminho(discos[escolha])
                 historico_caminhos.append(caminho_atual)
             else:
                 print("\nOpção inválida. Tente novamente.")
@@ -180,14 +212,14 @@ def explorador_de_arquivos_master():
                 continue
 
             print("-" * 85)
-            print("Ações Especiais: [sair] para encerrar | [voltar] para a pasta anterior.")
-            escolha = input("Escolha o número da entrada, [voltar] ou [sair]: ").lower()
+            print("| [end] encerrar | [v] pasta anterior | [s] buscar | [ex] abrir no explorador.")
+            escolha = input(">> ").lower()
 
-            if escolha == 'sair':
+            if escolha == 'end':
                 print("Encerrando o gerenciador de arquivos. Até mais!")
                 break
             
-            if escolha == 'voltar':
+            if escolha == 'v':
                 if len(historico_caminhos) > 1:
                     historico_caminhos.pop()  # Remove a pasta atual
                     caminho_atual = historico_caminhos[-1] # Volta para a pasta anterior
@@ -199,12 +231,31 @@ def explorador_de_arquivos_master():
                     print("\n<< Voltando para a lista de discos >>")
                 continue
 
+            if escolha == 's':
+                termo = input("Digite o termo de busca: ").strip()
+                if not termo:
+                    print("\nTermo de busca vazio. Tente novamente.")
+                    continue
+
+                resultados = buscar(caminho_atual, termo)
+                if resultados:
+                    print(f"\n--- Resultados de busca para '{termo}' em {caminho_atual} ---")
+                    for i, item in enumerate(resultados, 1):
+                        print(f"[{i}] {item}")
+                else:
+                    print(f"\nNenhum resultado encontrado para '{termo}'.")
+                continue
+
+            if escolha == 'ex':
+                abrir_pasta_explorer(caminho_atual)
+                continue
+
             if escolha in mapa_conteudo:
                 caminho_selecionado = mapa_conteudo[escolha]
                 
                 if os.path.isdir(caminho_selecionado):
                     # Abrir Pasta: Atualiza o caminho e adiciona ao histórico
-                    caminho_atual = caminho_selecionado
+                    caminho_atual = formatar_caminho(caminho_selecionado)
                     historico_caminhos.append(caminho_atual)
                     print(f"\n>> Entrando em: {os.path.basename(caminho_atual)} <<")
                 
