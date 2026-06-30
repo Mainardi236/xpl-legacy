@@ -1,2 +1,2 @@
-# file-explorer
+# xpl-legacy | file-explorer
 Um file explorer de terminal feito em python.
